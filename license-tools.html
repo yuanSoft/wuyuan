@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>生成授权文件</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 5px;
+        }
+
+        button {
+            width: 45%;
+            padding: 8px;
+            background-color: #428bca;
+            color: #fff;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px; /* future proofing */
+            -khtml-border-radius: 10px; /* for old Konqueror browsers */
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid transparent;
+            /*border-color: #357ebd;*/
+            font-weight: 900;
+            font-size: 125%
+        }
+
+        .button_disable {
+            width: 45%;
+            padding: 8px;
+            background-color: #428bca;
+            color: #a5a4a4;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px; /* future proofing */
+            -khtml-border-radius: 10px; /* for old Konqueror browsers */
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid transparent;
+            /*border-color: #357ebd;*/
+            font-weight: 900;
+            font-size: 125%
+        }
+
+        body {
+            text-align: center;
+        }
+
+        .box {
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: center;
+        }
+
+        .input {
+            border: 1px solid #E5E5E5;
+            color: #000000;
+            /*padding: 0 15px 0 15px;*/
+            margin-bottom: 15px;
+            width: 75%;
+            height: 45px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .btn_box {
+            width: 75%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-content: center;
+        }
+
+        .left {
+            display: flex;
+            margin-bottom: 10px;
+            flex-direction: row;
+        }
+
+        #app {
+            text-align: center;
+        }
+
+        /* Switch开关样式 */
+        input[type='checkbox'].switch {
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background: #ccc;
+            border-radius: 10px;
+            transition: border-color .3s, background-color .3s;
+        }
+
+        input[type='checkbox'].switch::after {
+            content: '';
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #fff;
+            transition: .4s;
+            top: 2px;
+            position: absolute;
+            left: 2px;
+        }
+
+        input[type='checkbox'].switch:checked {
+            background: rgb(19, 206, 102);
+        }
+
+        /* 当input[type=checkbox]被选中时：伪元素显示下面样式 位置发生变化 */
+        input[type='checkbox'].switch:checked::after {
+            content: '';
+            position: absolute;
+            left: 55%;
+            top: 2px;
+        }
+
+        input[type='checkbox'].switch:disabled {
+            background: rgb(129, 130, 129);
+        }
+
+        .small_bth {
+            width: 20%;
+            padding: 5px;
+            background-color: #428bca;
+            color: #fff;
+            /*-moz-border-radius: 10px;*/
+            /*-webkit-border-radius: 10px;*/
+            /*border-radius: 10px; !* future proofing *!*/
+            /*-khtml-border-radius: 10px; !* for old Konqueror browsers *!*/
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid transparent;
+            /*border-color: #357ebd;*/
+            font-weight: 900;
+            font-size: 75%
+        }
+
+        table {
+            border-collapse: collapse
+        }
+
+        table, td {
+            box-sizing: border-box;
+            border: 1px solid gray;
+        }
+
+        tr {
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="box">
+        <h3>小工具生成授权文件</h3>
+        <label for="expire_date"></label><input id="expire_date" type="date" placeholder="选择软件到期日"
+                                                onchange="dataInputChange()"
+                                                ondblclick="clear()" class="input">
+        <label for="content"></label><input id="content" type="text" disabled class="input">
+        <div class="left">
+            <label for="remoteAddress"></label>
+            <input type="checkbox" id="remoteAddress" checked class="switch" onchange="remoteAddressChange()">
+            <span>追加远程lic地址</span>
+        </div>
+        <div class="btn_box">
+            <button id="copy_content" onclick="copyContentH5(generate(data_input.value))">复制到剪切板</button>
+            <button id="down_file" onclick="downFileNow()">下载授权文件</button>
+        </div>
+    </div>
+    <hr style="width: 75%;"/>
+    <div class="box" style="width: 75%;">
+        <table border="1" width="100%" align="center">
+            <tr style="height: 35px">
+                <td colspan="2"><span>当前服务器信息</span><span id="msg"></span></td>
+                <td width="10%"><a href="javascript:;" target="_self" onclick="loadInfo()">刷新</a></td>
+            </tr>
+            <tr style="height: 35px">
+                <td width="30%">授权到期时间:</td>
+                <td colspan="2"><span id="lic_expire">--</span></td>
+            </tr>
+            <tr style="height: 35px">
+                <td>远程lic地址:</td>
+                <td colspan="2"><a id="lic_address">--</a></td>
+            </tr>
+            <tr style="height: 35px">
+                <td>当前licPath:</td>
+                <td colspan="2"><a id="lic_local">--</a></td>
+            </tr>
+            <tr style="height: 35px">
+                <td colspan="3">当前授权lic原内容</td>
+            </tr>
+            <tr style="height: 35px">
+                <td colspan="3"><span id="lic_full">--</span></td>
+            </tr>
+            <tr style="height: 35px">
+                <td width="30%">操作:</td>
+                <td colspan="2">
+                    <div style="display: flex;justify-content: space-around">
+                        <input type="button" onclick="uploadCode()" class="small_bth" value="上传至服务器"/>
+                        <input type="button" onclick="refresh()" class="small_bth" value="立刻刷新lic"/>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<script>
+    //创建xhr对象
+    const BASEURL = "https://electric-vehicle.sxwinstar.net/electBicycle/_free_";
+    let lic_full = document.getElementById('lic_full')
+    let lic_address = document.getElementById('lic_address')
+    let lic_local = document.getElementById('lic_local')
+    let lic_expire = document.getElementById('lic_expire')
+    let data_input = document.getElementById('expire_date')
+    let down_file_btn = document.getElementById('down_file')
+    let content = document.getElementById('content')
+    let msg = document.getElementById('msg')
+    let remoteAddress = document.getElementById('remoteAddress')
+
+    function dataInputChange() {
+        content.value = generate(data_input.value);
+    }
+
+    function remoteAddressChange() {
+        if (data_input.value !== '')
+            content.value = generate(data_input.value);
+    }
+
+    function clear() {
+        if (data_input.value !== '') {
+            data_input.value = '';
+            content.value = '';
+        }
+    }
+
+    function downFileNow() {
+        try {
+            disable_btn(down_file_btn)
+            let chooseDate = data_input.value;
+            if (chooseDate === '') {
+                alert('需键入软件到期日');
+            } else {
+                downFile(generate(chooseDate));
+            }
+            able_btn(down_file_btn)
+        } catch (e) {
+            alert(e)
+        }
+    }
+
+    //h5复制文本到剪切板
+    function copyContentH5(content) {
+        let copyDom = document.createElement('div');
+        copyDom.innerText = content;
+        copyDom.style.position = 'absolute';
+        copyDom.style.top = '0px';
+        copyDom.style.right = '-9999px';
+        document.body.appendChild(copyDom);
+        //创建选中范围
+        let range = document.createRange();
+        range.selectNode(copyDom);
+        //移除剪切板中内容
+        window.getSelection().removeAllRanges();
+        //添加新的内容到剪切板
+        window.getSelection().addRange(range);
+        //复制
+        let successful = document.execCommand('copy');
+        copyDom.parentNode.removeChild(copyDom);
+        try {
+            let msg = successful ? "成功" : "失败";
+            alert('复制' + msg);
+        } catch (err) {
+            alert('Oops , unable to copy!');
+        }
+    }
+
+    function disable_btn(btn) {
+        btn.setAttribute("disabled", true)
+        btn.classList.add('button_disable')
+    }
+
+    function able_btn(btn) {
+        btn.removeAttribute('disabled')
+        btn.classList.remove('button_disable')
+    }
+
+    function generate(chooseDate) {
+        let chooseDateInt = null;
+        if (chooseDate === '') {
+            alert('需键入软件到期日');
+        } else {
+            chooseDateInt = new Date(new Date(chooseDate).toLocaleDateString()).getTime();
+            let now = new Date(new Date().toLocaleDateString()).getTime();
+            if (now > chooseDateInt) {
+                alert('检查日期');
+            }
+        }
+        let chooseDateEncodeStr = reverse(encode(chooseDate.toString()));
+        let chooseDateIntEncodeStr = reverse(encode(chooseDateInt.toString()));
+        let lic = chooseDateEncodeStr + "." + chooseDateIntEncodeStr
+
+        let code = reverse(encode(lic))
+        if (remoteAddress.checked) {
+            code += '.' + getLicUrlCode()
+        }
+        return code;
+    }
+
+    function getLicUrl() {
+        let pathName = window.location.pathname.substring(1);
+        let dirName = pathName == '' ? '' : pathName.substring(0, pathName.lastIndexOf('/'));
+        let reg = new RegExp("%20", "g");
+        return window.location.origin + '/' + dirName.replace(reg, " ") + '/ebike.lic';
+        // return 'https://qhg1997.github.io/wuyuan/ebike.lic'
+
+    }
+
+    function getLicUrlCode() {
+        return reverse(encode(getLicUrl()))
+    }
+
+    function encode(str) {
+        return btoa(encodeURI(str));
+    }
+
+    function reverse(str) {
+        return str.replace('=', '').replace('=', '').split('').reverse().join("")
+    }
+
+    function downFile(content) {
+        try {
+            let blob = new Blob([content], {type: 'text/plain'});
+            let aLink = document.createElement('a');
+            aLink.download = 'ebike.lic';
+            aLink.style.display = 'none';
+            aLink.href = URL.createObjectURL(blob);
+            document.body.appendChild(aLink);
+            aLink.click();
+            document.body.removeChild(aLink);
+        } catch (e) {
+            alert(e)
+        }
+    }
+
+    function request(url) {
+        let xhr = getXHR();
+        return new Promise(function (resolve, reject) {
+            xhr.open('GET', url);
+            xhr.onload = function () {
+                //即使是404也会进入这个相应函数，所以需要检测状态
+                if (xhr.status == 200) {
+                    //完成许诺，返回响应文本
+                    resolve(xhr.response);
+                } else {
+                    //完成未完成，返回错误
+                    reject(Error(xhr.statusText));
+                }
+            };
+            // 发生错误时的相应函数
+            xhr.onerror = function () {
+                reject(Error("Network Error"));
+            };
+            // 发送请求
+            xhr.send();
+        });
+    }
+
+    function getXHR() {
+        let xhr;
+        if (window.XMLHttpRequest) {
+            xhr = new XMLHttpRequest();
+        } else {
+            xhr = new ActiveXObject('Microsoft.XMLHTTP');
+        }
+        return xhr
+    }
+
+    function loadInfo() {
+        lic_full.innerText = '';
+        lic_expire.innerText = '';
+        lic_address.innerText = '';
+        lic_address.href = '';
+        request(BASEURL + "/cat/lic/full").then(res => {
+            cleanMsg();
+            lic_full.innerText = res;
+        }).catch(e => {
+            showMsg(e)
+        })
+        request(BASEURL + "/cat/lic/address").then(res => {
+            cleanMsg();
+            lic_address.innerText = res;
+            lic_address.href = res;
+        }).catch(e => {
+            showMsg(e)
+        })
+        request(BASEURL + "/cat/lic/expire").then(res => {
+            cleanMsg();
+            lic_expire.innerText = res;
+        }).catch(e => {
+            showMsg(e)
+        })
+        request(BASEURL + "/cat/lic/local").then(res => {
+            cleanMsg();
+            lic_local.innerText = res;
+        }).catch(e => {
+            showMsg(e)
+        })
+    }
+
+    loadInfo();
+
+    function uploadCode() {
+        let chooseDate = data_input.value;
+        if (chooseDate === '') {
+            alert('需键入软件到期日');
+        } else {
+            request(BASEURL + "/save/lic/" + generate(chooseDate)).then(res => {
+                cleanMsg();
+                alert(res + "   刷新可确认上传结果")
+            }).catch(e => {
+                showMsg(e)
+            })
+        }
+    }
+
+    function refresh() {
+        if (confirm("若lic已到期，会导致服务立即停止")) {
+            request(BASEURL + "/reload/lic/_").then(res => {
+                cleanMsg();
+                alert(res)
+            }).catch(e => {
+                showMsg(e)
+            })
+        }
+    }
+
+    function showMsg() {
+        if (msg.innerText === '')
+            msg.innerText = ' (服务无法链接)';
+    }
+
+    function cleanMsg() {
+        if (msg.innerText !== '')
+            msg.innerText = '';
+    }
+
+    setInterval(loadInfo, 30000)
+</script>
+</body>
+</html>
