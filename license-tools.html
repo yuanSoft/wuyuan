@@ -171,7 +171,7 @@
         <label for="content"></label><input id="content" type="text" disabled class="input">
         <div class="left">
             <label for="remoteAddress"></label>
-            <input type="checkbox" id="remoteAddress" checked class="switch" onchange="remoteAddressChange()">
+            <input type="checkbox" id="remoteAddress" disabled checked class="switch" onchange="remoteAddressChange()">
             <span>追加远程lic地址</span>
         </div>
         <div class="btn_box">
@@ -187,23 +187,19 @@
                 <td width="10%"><a href="javascript:;" target="_self" onclick="loadInfo()">刷新</a></td>
             </tr>
             <tr style="height: 35px">
-                <td width="30%">授权到期时间:</td>
+                <td width="30%">服务lic授权到期时间:</td>
                 <td colspan="2"><span id="lic_expire">--</span></td>
             </tr>
             <tr style="height: 35px">
-                <td>远程lic地址:</td>
+                <td>服务远程lic地址:</td>
                 <td colspan="2"><a id="lic_address">--</a></td>
             </tr>
             <tr style="height: 35px">
-                <td>点击去GitHub修改远程lic文件:</td>
-                <td colspan="2"><a href="https://github.com/yuansoft/wuyuan/edit/main/ebike.lic">https://github.com/yuansoft/wuyuan/edit/main/ebike.lic</a></td>
-            </tr>
-            <tr style="height: 35px">
-                <td>当前licPath:</td>
+                <td>服务licPath:</td>
                 <td colspan="2"><a id="lic_local">--</a></td>
             </tr>
             <tr style="height: 35px">
-                <td colspan="3">当前授权lic原内容</td>
+                <td colspan="3">服务lic原内容</td>
             </tr>
             <tr style="height: 35px">
                 <td colspan="3"><span id="lic_full">--</span></td>
@@ -217,6 +213,20 @@
                     </div>
                 </td>
             </tr>
+            <tr style="height: 35px">
+                <td colspan="3">Git远程lic内容</td>
+            </tr>
+            <tr style="height: 35px">
+                <td colspan="3"><span id="git_lic_address">--</span></td>
+            </tr>
+            <tr style="height: 35px">
+                <td width="30%">Git远程lic到期时间:</td>
+                <td colspan="2"><span id="git_lic_expire">--</span></td>
+            </tr>
+            <tr style="height: 35px">
+                <td>点击去GitHub修改远程lic文件:</td>
+                <td colspan="2"><a id="git_address">--</a></td>
+            </tr>
         </table>
     </div>
 </div>
@@ -225,8 +235,11 @@
     const BASEURL = "https://electric-vehicle.sxwinstar.net/electBicycle/_free_";
     let lic_full = document.getElementById('lic_full')
     let lic_address = document.getElementById('lic_address')
+    let git_address = document.getElementById('git_address')
     let lic_local = document.getElementById('lic_local')
+    let git_lic_address = document.getElementById('git_lic_address')
     let lic_expire = document.getElementById('lic_expire')
+    let git_lic_expire = document.getElementById('git_lic_expire')
     let data_input = document.getElementById('expire_date')
     let down_file_btn = document.getElementById('down_file')
     let content = document.getElementById('content')
@@ -322,6 +335,51 @@
         return code;
     }
 
+    function getDateStr(lic) {
+        let chooseDate = null;
+        if (lic === '') {
+            return chooseDate;
+        } else {
+            let licArr = lic.split(".")
+            return licArr[0];
+        }
+    }
+
+    function getLicUrlStr(lic) {
+        let chooseDate = null;
+        if (lic === '') {
+            return chooseDate;
+        } else {
+            let licArr = lic.split(".")
+            return licArr.length === 2 ? licArr[1] : "";
+        }
+    }
+
+    function parseDate(lic) {
+        let chooseDate = null;
+        if (lic === '') {
+            return chooseDate;
+        }
+        let arr = decode(reverse(getDateStr(lic))).split(".")
+        let date = arr[0]
+        let timestamp = arr[1]
+        date = decode(reverse(date));
+        timestamp = decode(reverse(timestamp));
+        if (new Date(new Date(date).toLocaleDateString()).getTime().toString() === timestamp.toString()) {
+            return date;
+        } else {
+            return "解析失败!";
+        }
+    }
+
+    function parseLicUrl(lic) {
+        let chooseDate = null;
+        if (lic === '') {
+            return chooseDate;
+        }
+        return decode(reverse(decode(reverse(getLicUrlStr(lic)))));
+    }
+
     function getLicUrl() {
         let pathName = window.location.pathname.substring(1);
         let dirName = pathName == '' ? '' : pathName.substring(0, pathName.lastIndexOf('/'));
@@ -337,6 +395,10 @@
 
     function encode(str) {
         return btoa(encodeURI(str));
+    }
+
+    function decode(str) {
+        return atob(encodeURI(str));
     }
 
     function reverse(str) {
@@ -392,10 +454,15 @@
     }
 
     function loadInfo() {
-        lic_full.innerText = '';
-        lic_expire.innerText = '';
+        lic_full.innerText = '--';
+        lic_expire.innerText = '--';
+        lic_local.innerText = '--';
         lic_address.innerText = '';
-        lic_address.href = '';
+        lic_address.href = null;
+        git_address.innerText = '';
+        git_address.href = null;
+        git_lic_address.innerText = '--'
+        git_lic_expire.innerText = '--'
         request(BASEURL + "/cat/lic/full").then(res => {
             cleanMsg();
             lic_full.innerText = res;
@@ -406,12 +473,21 @@
             cleanMsg();
             lic_address.innerText = res;
             lic_address.href = res;
+            request(res).then(lic => {
+                git_lic_address.innerText = lic;
+                let date = parseDate(lic)
+                let days = (Math.floor((new Date(date).getTime() - new Date().getTime()) / (24 * 3600 * 1000))) % (24 * 3600 * 1000) //计算天数后剩余的毫秒数
+                git_lic_expire.innerText = date + "\t\t（" + (days < 0 ? '已过期' + days + '天）' : '剩' + days + '天到期）');
+            });
+            git_address.innerText = 'https://github.com/yuansoft/wuyuan/edit/main/ebike.lic';
+            git_address.href = 'https://github.com/yuansoft/wuyuan/edit/main/ebike.lic';
         }).catch(e => {
             showMsg(e)
         })
         request(BASEURL + "/cat/lic/expire").then(res => {
             cleanMsg();
-            lic_expire.innerText = res;
+            let days = (Math.floor((new Date(res).getTime() - new Date().getTime()) / (24 * 3600 * 1000))) % (24 * 3600 * 1000) //计算天数后剩余的毫秒数
+            lic_expire.innerText = res + "\t\t（" + (days < 0 ? '已过期' + days + '天）' : '剩' + days + '天到期）');
         }).catch(e => {
             showMsg(e)
         })
