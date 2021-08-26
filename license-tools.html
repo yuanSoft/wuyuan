@@ -477,7 +477,7 @@
                 git_lic_address.innerText = lic;
                 let date = parseDate(lic)
                 let days = (Math.floor((new Date(date).getTime() - new Date().getTime()) / (24 * 3600 * 1000))) % (24 * 3600 * 1000) //计算天数后剩余的毫秒数
-                git_lic_expire.innerText = date + "\t\t（" + (days < 0 ? '已过期' + days + '天）' : '剩' + days + '天到期）');
+                git_lic_expire.innerText = date + "\t\t（" + (days <= 0 ? days === 0 ? '今天到期）' : '已过期' + Math.abs(days) + '天）' : '剩' + days + '天到期）');
             });
             git_address.innerText = 'https://github.com/yuansoft/wuyuan/edit/main/ebike.lic';
             git_address.href = 'https://github.com/yuansoft/wuyuan/edit/main/ebike.lic';
@@ -487,7 +487,7 @@
         request(BASEURL + "/cat/lic/expire").then(res => {
             cleanMsg();
             let days = (Math.floor((new Date(res).getTime() - new Date().getTime()) / (24 * 3600 * 1000))) % (24 * 3600 * 1000) //计算天数后剩余的毫秒数
-            lic_expire.innerText = res + "\t\t（" + (days < 0 ? '已过期' + days + '天）' : '剩' + days + '天到期）');
+            lic_expire.innerText = res + "\t\t（" + (days <= 0 ? days === 0 ? '今天到期）' : '已过期' + Math.abs(days) + '天）' : '剩' + days + '天到期）');
         }).catch(e => {
             showMsg(e)
         })
